@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% if user %}
+        <div class="new-post-link">
+            <a href="/blog/newpost">New Post</a>
+        </div>
+        <div class="my-posts">
+            <a href="/blog/welcome">My Posts</a>
+        </div>
+    {% endif %}
+
+    <h2>Welcome to {{username}}'s blog.</h2>
+    {% for entry in user_blog_entries %}
+        <div class="post">
+            <div class="post-heading">
+                <div class="post-title">{{entry.subject}}</div>
+                <div class="post-date">{{entry.created.date().strftime("%b %d, %Y")}}</div>
+            </div>
+            <pre width="30" class="post-content">{{entry.content | safe}}</pre>
+        </div>
+        <br>
+    {% endfor %}
+{% endblock %}

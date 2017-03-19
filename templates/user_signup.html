@@ -1,0 +1,70 @@
+<body>
+    <h2>Signup</h2>
+    <form method="post">
+      <table>
+        <tbody><tr>
+          <td class="label">
+            Username
+          </td>
+          <td>
+            <input type="text" name="username" value="{{username}}">
+          </td>
+          <td class="error">
+          {% if invalid_username %}
+        		{{invalid_username}}
+        	{% endif %}
+          {% if username_exists %}
+            {{username_exists}}
+          {% endif %}    
+          </td>
+        </tr>
+
+        <tr>
+          <td class="label">
+            Password
+          </td>
+          <td>
+            <input type="password" name="password" value="">
+          </td>
+          <td class="error">
+          	{% if invalid_password %}
+            	{{invalid_password}}
+        	{% endif %}    
+          </td>
+        </tr>
+
+        <tr>
+          <td class="label">
+            Verify Password
+          </td>
+          <td>
+            <input type="password" name="verify" value="">
+          </td>
+          <td class="error">
+          	{% if passwords_dont_match %}
+            	{{passwords_dont_match}}
+        	{% endif %}    
+            
+          </td>
+        </tr>
+
+        <tr>
+          <td class="label">
+            Email (optional)
+          </td>
+          <td>
+            <input type="text" name="email" value="{{email}}">
+          </td>
+          <td class="error">
+          	{% if invalid_email %}
+            	{{invalid_email}}
+        	{% endif %}    
+          </td>
+        </tr>
+      </tbody></table>
+
+      <input type="submit">
+      <hr>
+      <div>Already a user? <a href="/blog/login">Login</a></div>
+    </form>
+</body>
