@@ -15,7 +15,13 @@
       </label>
 
       <div class="error">{{error}}</div>
-
+      <input type="button" id="cancel-button" value="Cancel">
       <input type="submit">
     </form>
+    <script type="text/javascript">
+        var button = document.getElementById('cancel-button');
+        button.addEventListener('click',function(){
+            window.location.href = window.history.back()
+        })
+    </script>
 {% endblock %}
