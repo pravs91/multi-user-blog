@@ -16,5 +16,17 @@
             <div class="post-user">Created by {{blog.user.username}}</div>
         </div>
         <pre width="30" class="post-content">{{blog.content | safe}}</pre>
+        {% if blog.user.username == user.username %}
+            <button class="edit-btn" onclick="edit({{blog.key().id()}})">Edit</button>
+            <button class="delete-btn" onclick="remove({{blog.key().id()}})">Delete</button>
+        {% endif %}
     </div>
+    <script type="text/javascript">
+        function edit(id){
+            window.location.href = '/blog/' + id + '/edit';
+        }
+        function remove(id){
+            window.location.href = "/blog/" + id + '/delete';
+        }
+    </script>
 {% endblock %}

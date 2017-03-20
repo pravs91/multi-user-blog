@@ -1,0 +1,13 @@
+{% extends "base.html" %}
+
+{% block content %}
+    {% if user %}
+        <div class="new-post-link">
+            <a href="/blog/newpost">New Post</a>
+        </div>
+        <div class="my-posts">
+            <a href="/blog/welcome">My Posts</a>
+        </div>
+    {% endif %}
+    <p class="delete-success">You have successfully deleted your post <b>'{{subject}}'</b></p>
+{% endblock %}

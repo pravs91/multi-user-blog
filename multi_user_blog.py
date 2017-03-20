@@ -40,6 +40,10 @@ class Handler(webapp2.RequestHandler):
                 self.response.headers.add_header('Set-Cookie', 'user=; Path=/')
             return None
 
+    def error_404(self, msg):
+        self.response.status = '404 Not found'
+        self.response.body = 'Error 404! ' + msg
+
 
 class MainPage(Handler):
 
@@ -229,9 +233,9 @@ class PermalinkHandler(Handler):
         if blog:
             user = blog.user
             self.render("permalink.html", blog=blog, user=user)
-        # redirect to /blog if permalink not found
+        # send 404 if not found
         else:
-            return self.redirect("/blog")
+            self.error_404("The requested blog URL was not found.")
 
 
 class BlogPageHandler(Handler):
@@ -253,19 +257,100 @@ class UserBlogPageHandler(Handler):
         all_users = db.GqlQuery(
             "SELECT * FROM User WHERE username= :username", username=username)
         given_user = all_users.get()
-        # redirect to /blog if username not found
+        # error 404 if username not found
         if not given_user:
-            self.redirect("/blog/")
+            self.error_404("The requested user's blog was not found.")
+            return
 
         # get blog entries of this particular user from db
-        user_blog_entries = db.GqlQuery(
+        blog_entries = db.GqlQuery(
             "SELECT * FROM BlogPost WHERE user= :given_user\
             ORDER BY created DESC", given_user=given_user)
 
         logged_in_user = self.validate_user()
         self.render("user_blog_page.html",
-                    user_blog_entries=user_blog_entries,
+                    blog_entries=blog_entries,
                     user=logged_in_user, username=username)
+
+
+class EditPageHandler(Handler):
+    """A class to edit a blog post."""
+
+    def get(self, blog_id):
+        # check if user is logged in
+        user = self.validate_user()
+        if not user:
+            return self.redirect("/blog/login")
+        blog = BlogPost.get_by_id(int(blog_id))
+        if blog:
+            self.render("edit_page.html", user=user,
+                        subject=blog.subject, content=blog.content)
+        # redirect to /blog if post not found
+        else:
+            self.error_404("The requested blog URL was not found.")
+
+    def post(self, blog_id):
+        subject = self.request.get("subject")
+        content = self.request.get("content")
+
+        # validate subject and content present
+        if not (subject and content):
+            error = "Please enter both subject and content."
+            self.render("edit_page.html", error=error,
+                        subject=subject, content=content)
+        else:
+            user = self.validate_user()
+            # redirect to login if cookie wrong
+            if not user:
+                return self.redirect("/blog/login")
+
+            # retrieve blog post from db
+            blog = BlogPost.get_by_id(int(blog_id))
+            if blog:
+                blog.subject = subject
+                blog.content = content
+                # edit timestamp
+                blog.created = db.DateTimeProperty.now()
+                blog.put()
+                self.redirect('/blog/' + blog_id)
+            # 404 error if blog not found
+            else:
+                self.error_404("The requested blog URL was not found.")
+
+
+class DeletePageHandler(Handler):
+
+    def get(self, blog_id):
+        # check if user is logged in
+        user = self.validate_user()
+        if not user:
+            return self.redirect("/blog/login")
+        blog = BlogPost.get_by_id(int(blog_id))
+        if blog:
+            self.render("delete_page.html", user=user,
+                        blog=blog)
+        # redirect to /blog if post not found
+        else:
+            self.error_404("The requested blog URL was not found.")
+
+    def post(self, blog_id):
+        user = self.validate_user()
+        # redirect to login if cookie wrong
+        if not user:
+            return self.redirect("/blog/login")
+
+        # retrieve blog post from db
+        blog = BlogPost.get_by_id(int(blog_id))
+
+        # delete and redirect to /blog
+        if blog:
+            subject = blog.subject
+            blog.delete()
+            self.render("delete_success.html", subject=subject, user=user)
+            # return self.redirect("/blog/")
+        else:
+            self.error_404("The requested blog URL was not found.")
+
 
 app = webapp2.WSGIApplication([
     ('/', MainPage),
@@ -276,5 +361,7 @@ app = webapp2.WSGIApplication([
     (r'/blog/newpost/?', NewPostHandler),
     (r'/blog/(\d+)/?', PermalinkHandler),
     (r'/blog/logout/?', LogoutHandler),
+    (r'/blog/(\d+)/edit', EditPageHandler),
+    (r'/blog/(\d+)/delete', DeletePageHandler),
     (r'/blog/(\w+)/?', UserBlogPageHandler)  # check if a user page exists
 ], debug=True)

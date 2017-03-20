@@ -1,9 +1,12 @@
+{% extends "base.html" %}
+
+{% block content %}
 <form method="post">
 	<h2>Login</h2>
 	<table>
 		<tbody>
 			<tr>
-				<td>
+				<td class="label">
 					Username
 				</td>
 				<td>
@@ -11,7 +14,7 @@
 				</td>	
 			</tr>
 			<tr>
-				<td>
+				<td class="label">
 					Password
 				</td>
 				<td>
@@ -21,7 +24,7 @@
 		</tbody>
 	</table>	
 	<br>
-	<div>
+	<div class="error">
 		{% if error %}
 			{{error}}
 		{% endif %}
@@ -34,3 +37,4 @@
         New user? <a href="/blog/signup">Sign Up</a>
     </div>	
 </form>
+{% endblock %}

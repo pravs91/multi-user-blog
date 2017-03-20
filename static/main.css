@@ -56,6 +56,9 @@ h2 {
     color: red;
 }
 
+.label {
+    text-align: right;
+}
 label {
   display: block;
   font-size: 20px;
@@ -66,7 +69,14 @@ label + label {
 }
 
 input[type=text] {
-    width: 500px;
+    width: 300px;
+    font-size: 20px;
+    padding: 2px;
+    font-family: monospace;
+}
+
+input[type=password] {
+    width: 300px;
     font-size: 20px;
     padding: 2px;
     font-family: monospace;
@@ -81,6 +91,14 @@ textarea {
 
 input[type=submit] {
   font-size: 24px;
+}
+
+input[type=button] {
+  font-size: 24px;
+}
+
+button {
+    font-size: 14px;
 }
 
 pre {
@@ -131,3 +149,6 @@ img {
     margin-top: 5px;
 }
 
+.delete-success{
+    font-size: 20px;
+}
