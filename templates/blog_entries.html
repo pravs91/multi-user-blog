@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
+    <div class="new-post-link">
+        <a href="/blog/newpost">New Post</a>
+    </div>
     {% if user %}
-        <div class="new-post-link">
-            <a href="/blog/newpost">New Post</a>
-        </div>
         <div class="my-posts">
             <a href="/blog/welcome">My Posts</a>
         </div>
@@ -12,19 +12,53 @@
 
     {% block title %}
     {% endblock %}
+    {% block comment_header %}
+    {% endblock %}
     {% for entry in blog_entries %}
         <div class="post">
             <div class="post-heading">
-                <div class="post-title">{{entry.subject}}</div>
+                <div class="post-title">
+                    <a class="permalink" href="/blog/{{entry.key().id()}}">{{entry.subject}}</a>
+                    {% if user and user.username != entry.user.username %}
+                        <button class="like-btn">
+                            <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+                        </button>
+                    {% endif %}
+                </div>
                 <div class="post-date">{{entry.created.strftime("%b %d, %Y")}}</div>
-                <div class="post-user">Created by {{entry.user.username}}</div>
+                <div class="post-user">
+                    Created by <a class="user-link" href="/blog/{{entry.user.username}}">{{entry.user.username}}</a>
+                </div>
             </div>
             <pre width="30" class="post-content">{{entry.content | safe}}</pre>
             {% if entry.user.username == user.username %}
                 <button class="edit-btn" onclick="edit({{entry.key().id()}})">Edit</button>
                 <button class="delete-btn" onclick="remove({{entry.key().id()}})">Delete</button>
             {% endif %}
+            <button class="comment-btn" onclick="comment({{entry.key().id()}})">
+                <i class="fa fa-comment" aria-hidden="true"></i>
+            </button>
+            <br>
+            <div class="comments">
+                {% if comments.count(limit=2) > 0 %}
+                    <h3>Comments</h3>
+                {% endif %}
+                {% for comment in comments %}
+                    {% if comment.blog.key().id() == entry.key().id() %}
+                        <div class="single-comment">
+                            <div class="comment-heading">
+                                <a class="user-link" href="/blog/{{comment.user.username}}">{{comment.user.username}}</a>
+                                <span class="comment-time">Posted on {{comment.created.strftime("%d %B, %Y %I:%M%p")}}</span>
+                            </div>
+                            <div class="comment-content">
+                                <p>{{comment.content}}</p>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
         </div>
+        <br>
         <br>
     {% endfor %}
     <script type="text/javascript">
@@ -33,6 +67,22 @@
         }
         function remove(id){
             window.location.href = "/blog/" + id + '/delete';
+        }
+
+        function addEventForLike(element){
+            element.addEventListener('click',function(){
+                element.children[0].classList.toggle('fa-thumbs-o-up');
+                element.children[0].classList.toggle('fa-thumbs-o-down');
+            })
+        }
+
+        var like_buttons = document.getElementsByClassName('like-btn');
+        for(var i=0; i<like_buttons.length; i++){
+            addEventForLike(like_buttons[i]);
+        }
+
+        function comment(id){
+            window.location.href = '/blog/' + id + '/createComment';
         }
     </script>
 {% endblock %}

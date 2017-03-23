@@ -2,6 +2,7 @@ import os
 import webapp2
 import jinja2
 import re
+import time
 from utilities import make_salt, make_pw_hash, validate_pw,\
     make_cookie, check_cookie
 from model import User, BlogPost, Like, Comment
@@ -77,8 +78,7 @@ class SignUpHandler(Handler):
         if not valid_username:
             invalid_username = "That's not a valid username."
 
-        all_users = db.GqlQuery(
-            "SELECT * FROM User WHERE username= :username", username=username)
+        all_users = db.Query(User).filter('username =', username)
         user = all_users.get()
         if user:
             username_exists = "That username already exists."
@@ -129,9 +129,8 @@ class WelcomeHandler(Handler):
         user = self.validate_user()
         if user:
             # get blog entries of this particular user from db
-            blog_entries = db.GqlQuery(
-                "SELECT * FROM BlogPost WHERE user= :user\
-                ORDER BY created DESC", user=user)
+            blog_entries = db.Query(BlogPost).filter(
+                'user =', user).order('-created')
             self.render("welcome_page.html", user=user,
                         blog_entries=blog_entries)
         else:
@@ -193,8 +192,7 @@ class LoginHandler(Handler):
             return
 
         # check if username exists in db
-        all_users = db.GqlQuery(
-            "SELECT * FROM User WHERE username= :username", username=username)
+        all_users = db.Query(User).filter('username =', username)
         user = all_users.get()
         if not user:
             error = "The given username is not registered."
@@ -231,8 +229,13 @@ class PermalinkHandler(Handler):
     def get(self, blog_id):
         blog = BlogPost.get_by_id(int(blog_id))
         if blog:
-            user = blog.user
-            self.render("permalink.html", blog=blog, user=user)
+            user = self.validate_user()
+            comments = db.Query(Comment).filter(
+                'blog =', blog).order('created')
+            blog_entries = [blog]  # user array to use same template
+            self.render("blog_entries.html",
+                        blog_entries=blog_entries, user=user,
+                        comments=comments)
         # send 404 if not found
         else:
             self.error_404("The requested blog URL was not found.")
@@ -244,9 +247,10 @@ class BlogPageHandler(Handler):
     def get(self):
         # get all blog entries from db
         user = self.validate_user()
-        blog_entries = db.GqlQuery(
-            "SELECT * FROM BlogPost ORDER BY created DESC")
-        self.render("blog_page.html", blog_entries=blog_entries, user=user)
+        blog_entries = db.Query(BlogPost).order('-created')
+        comments = db.Query(Comment).order('-created')
+        self.render("blog_page.html", blog_entries=blog_entries,
+                    user=user, comments=comments)
 
 
 class UserBlogPageHandler(Handler):
@@ -254,8 +258,7 @@ class UserBlogPageHandler(Handler):
 
     def get(self, username):
         # get user if username exists
-        all_users = db.GqlQuery(
-            "SELECT * FROM User WHERE username= :username", username=username)
+        all_users = db.Query(User).filter('username =', username)
         given_user = all_users.get()
         # error 404 if username not found
         if not given_user:
@@ -263,10 +266,8 @@ class UserBlogPageHandler(Handler):
             return
 
         # get blog entries of this particular user from db
-        blog_entries = db.GqlQuery(
-            "SELECT * FROM BlogPost WHERE user= :given_user\
-            ORDER BY created DESC", given_user=given_user)
-
+        blog_entries = db.Query(BlogPost).filter(
+            'user =', given_user).order('-created')
         logged_in_user = self.validate_user()
         self.render("user_blog_page.html",
                     blog_entries=blog_entries,
@@ -309,8 +310,6 @@ class EditPageHandler(Handler):
             if blog:
                 blog.subject = subject
                 blog.content = content
-                # edit timestamp
-                blog.created = db.DateTimeProperty.now()
                 blog.put()
                 self.redirect('/blog/' + blog_id)
             # 404 error if blog not found
@@ -329,7 +328,7 @@ class DeletePageHandler(Handler):
         if blog:
             self.render("delete_page.html", user=user,
                         blog=blog)
-        # redirect to /blog if post not found
+        # send 404 error if post not found
         else:
             self.error_404("The requested blog URL was not found.")
 
@@ -345,9 +344,47 @@ class DeletePageHandler(Handler):
         # delete and redirect to /blog
         if blog:
             subject = blog.subject
+            # delete associated comments
+            comments = db.Query(Comment).filter('blog =', blog)
+            db.delete(comments)
+            # delete blog itself
             blog.delete()
             self.render("delete_success.html", subject=subject, user=user)
-            # return self.redirect("/blog/")
+        else:
+            self.error_404("The requested blog URL was not found.")
+
+
+class CreateCommentHandler(Handler):
+
+    def get(self, blog_id):
+        # check if user is logged in
+        user = self.validate_user()
+        if not user:
+            return self.redirect("/blog/login")
+        blog = BlogPost.get_by_id(int(blog_id))
+        if blog:
+            blog_entries = [blog]
+            self.render("create_comment.html", user=user,
+                        blog_entries=blog_entries)
+        # send 404 error if post not found
+        else:
+            self.error_404("The requested blog URL was not found.")
+
+    def post(self, blog_id):
+        user = self.validate_user()
+        # redirect to login if cookie wrong
+        if not user:
+            return self.redirect("/blog/login")
+
+        # retrieve blog post from db
+        blog = BlogPost.get_by_id(int(blog_id))
+
+        if blog:
+            content = self.request.get("comment")
+            comment = Comment(user=user, blog=blog, content=content)
+            comment.put()
+            time.sleep(0.2)  # FIXME comment while deploying
+            self.redirect('/blog/' + blog_id)
         else:
             self.error_404("The requested blog URL was not found.")
 
@@ -363,5 +400,6 @@ app = webapp2.WSGIApplication([
     (r'/blog/logout/?', LogoutHandler),
     (r'/blog/(\d+)/edit', EditPageHandler),
     (r'/blog/(\d+)/delete', DeletePageHandler),
+    (r'/blog/(\d+)/createComment', CreateCommentHandler),
     (r'/blog/(\w+)/?', UserBlogPageHandler)  # check if a user page exists
 ], debug=True)

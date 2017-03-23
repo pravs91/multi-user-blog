@@ -16,10 +16,12 @@ class BlogPost(db.Model):
 
 
 class Like(db.Model):
-    blog_post = db.ReferenceProperty(BlogPost)
+    blog = db.ReferenceProperty(BlogPost)
     user = db.ReferenceProperty(User)
 
 
 class Comment(db.Model):
-    blog_post = db.ReferenceProperty(BlogPost)
+    blog = db.ReferenceProperty(BlogPost)
     user = db.ReferenceProperty(User)
+    content = db.TextProperty(required=True)
+    created = db.DateTimeProperty(auto_now_add=True)  # create/edit date

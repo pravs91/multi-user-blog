@@ -1,0 +1,30 @@
+{% extends "blog_entries.html" %}
+
+{% block comment_header %}
+    <form class="comment-header" method="post">
+        <h3>Enter your comment</h3>
+        <textarea name="comment" class="comment-input"></textarea>
+        <br>
+        <input type="button" value="Cancel" id="cancel-button">
+        <input type="submit" id="submit-button">
+        <br>
+        <br>
+    </form>
+    <script
+      src="https://code.jquery.com/jquery-3.2.1.min.js"
+      integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+      crossorigin="anonymous"></script>
+    <script>
+        // disable submit button if input is empty using jquery
+        $(function(){
+            $('#submit-button').prop('disabled',true);
+            $('.comment-input').on("keyup",function(){
+                $('#submit-button').prop('disabled', this.value == "" ? true : false);
+            })
+            $('#cancel-button').on('click',function(){
+                window.location.href = window.history.back();
+            })
+        });
+    </script>
+{% endblock %}
+
