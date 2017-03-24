@@ -46,12 +46,6 @@ class Handler(webapp2.RequestHandler):
         self.response.body = 'Error 404! ' + msg
 
 
-class MainPage(Handler):
-
-    def get(self):
-        self.redirect('/blog')
-
-
 class SignUpHandler(Handler):
     """A class to handle signup page."""
 
@@ -121,51 +115,6 @@ class SignUpHandler(Handler):
         return reObj.match(input)
 
 
-class WelcomeHandler(Handler):
-    """A class to show welcome page to logged in user."""
-
-    def get(self):
-        # this function will delete cookie if it is not valid
-        user = self.validate_user()
-        if user:
-            # get blog entries of this particular user from db
-            blog_entries = db.Query(BlogPost).filter(
-                'user =', user).order('-created')
-            self.render("welcome_page.html", user=user,
-                        blog_entries=blog_entries)
-        else:
-            self.redirect("/blog/login")
-
-
-class NewPostHandler(Handler):
-
-    def get(self):
-        # if user is not logged in, redirect to login
-        user = self.validate_user()
-        if not user:
-            return self.redirect("/blog/login")
-
-        # render newpost page if logged in
-        self.render("newpost.html", user=user)
-
-    def post(self):
-        subject = self.request.get("subject")
-        content = self.request.get("content")
-        if not (subject and content):
-            error = "Please enter both subject and content."
-            self.render("newpost.html", error=error,
-                        subject=subject, content=content)
-        else:
-            user = self.validate_user()
-            # redirect to login if cookie wrong
-            if not user:
-                return self.redirect("/blog/login")
-            blog = BlogPost(subject=subject, content=content, user=user)
-            blog.put()  # insert into db
-            id = blog.key().id()
-            self.redirect("/blog/" + str(id))
-
-
 class LoginHandler(Handler):
     """A class to handle the login page."""
 
@@ -224,6 +173,74 @@ class LogoutHandler(Handler):
         self.redirect("/blog/login")
 
 
+class NewPostHandler(Handler):
+
+    def get(self):
+        # if user is not logged in, redirect to login
+        user = self.validate_user()
+        if not user:
+            return self.redirect("/blog/login")
+
+        # render newpost page if logged in
+        self.render("newpost.html", user=user)
+
+    def post(self):
+        subject = self.request.get("subject")
+        content = self.request.get("content")
+        if not (subject and content):
+            error = "Please enter both subject and content."
+            self.render("newpost.html", error=error,
+                        subject=subject, content=content)
+        else:
+            user = self.validate_user()
+            # redirect to login if cookie wrong
+            if not user:
+                return self.redirect("/blog/login")
+            blog = BlogPost(subject=subject, content=content, user=user)
+            blog.put()  # insert into db
+            id = blog.key().id()
+            self.redirect("/blog/" + str(id))
+
+
+class MainPage(Handler):
+
+    def get(self):
+        self.redirect('/blog')
+
+
+class CommentsHelper(object):
+
+    @staticmethod
+    def populate_comments(blog_entries):
+        comments_dict = {}
+        for blog in blog_entries:
+            # retrieve comments for this blog
+            comments = db.Query(Comment).filter(
+                'blog =', blog).order('created')
+            # populate dict with id as unique key
+            if comments.count(limit=2) > 0:
+                comments_dict[blog.key().id()] = comments
+        return comments_dict
+
+
+class WelcomeHandler(Handler):
+    """A class to show welcome page to logged in user."""
+
+    def get(self):
+        # this function will delete cookie if it is not valid
+        user = self.validate_user()
+        if user:
+            # get blog entries of this particular user from db
+            blog_entries = db.Query(BlogPost).filter(
+                'user =', user).order('-created')
+            comments_dict = CommentsHelper.populate_comments(blog_entries)
+            self.render("welcome_page.html", user=user,
+                        blog_entries=blog_entries,
+                        comments_dict=comments_dict)
+        else:
+            self.redirect("/blog/login")
+
+
 class PermalinkHandler(Handler):
 
     def get(self, blog_id):
@@ -233,9 +250,10 @@ class PermalinkHandler(Handler):
             comments = db.Query(Comment).filter(
                 'blog =', blog).order('created')
             blog_entries = [blog]  # user array to use same template
+            comments_dict = CommentsHelper.populate_comments(blog_entries)
             self.render("blog_entries.html",
                         blog_entries=blog_entries, user=user,
-                        comments=comments)
+                        comments_dict=comments_dict)
         # send 404 if not found
         else:
             self.error_404("The requested blog URL was not found.")
@@ -248,9 +266,9 @@ class BlogPageHandler(Handler):
         # get all blog entries from db
         user = self.validate_user()
         blog_entries = db.Query(BlogPost).order('-created')
-        comments = db.Query(Comment).order('-created')
+        comments_dict = CommentsHelper.populate_comments(blog_entries)
         self.render("blog_page.html", blog_entries=blog_entries,
-                    user=user, comments=comments)
+                    user=user, comments_dict=comments_dict)
 
 
 class UserBlogPageHandler(Handler):
@@ -268,9 +286,10 @@ class UserBlogPageHandler(Handler):
         # get blog entries of this particular user from db
         blog_entries = db.Query(BlogPost).filter(
             'user =', given_user).order('-created')
+        comments_dict = CommentsHelper.populate_comments(blog_entries)
         logged_in_user = self.validate_user()
         self.render("user_blog_page.html",
-                    blog_entries=blog_entries,
+                    blog_entries=blog_entries, comments_dict=comments_dict,
                     user=logged_in_user, username=username)
 
 
@@ -364,8 +383,9 @@ class CreateCommentHandler(Handler):
         blog = BlogPost.get_by_id(int(blog_id))
         if blog:
             blog_entries = [blog]
+            comments_dict = CommentsHelper.populate_comments(blog_entries)
             self.render("create_comment.html", user=user,
-                        blog_entries=blog_entries)
+                        blog_entries=blog_entries, comments_dict=comments_dict)
         # send 404 error if post not found
         else:
             self.error_404("The requested blog URL was not found.")
@@ -389,6 +409,42 @@ class CreateCommentHandler(Handler):
             self.error_404("The requested blog URL was not found.")
 
 
+class EditCommentHandler(Handler):
+
+    def get(self, comment_id):
+        # check if user is logged in
+        user = self.validate_user()
+        if not user:
+            return self.redirect("/blog/login")
+
+        comment = Comment.get_by_id(int(comment_id))
+        if comment:
+            blog_entries = [comment.blog]
+            comments_dict = CommentsHelper.populate_comments(blog_entries)
+            self.render("create_comment.html", user=user,
+                        content=comment.content,
+                        blog_entries=blog_entries,
+                        comments_dict=comments_dict)
+        else:
+            self.error_404("The requested comment URL does not exist.")
+
+    def post(self, comment_id):
+        # check if user is logged in
+        user = self.validate_user()
+        if not user:
+            return self.redirect("/blog/login")
+
+        comment = Comment.get_by_id(int(comment_id))
+        if comment:
+            comment.content = self.request.get("comment")
+            comment.put()
+            time.sleep(0.2)  # FIXME
+            blog_id = comment.blog.key().id()
+            self.redirect('/blog/' + str(blog_id))
+        else:
+            self.error_404("The requested comment URL does not exist.")
+
+
 app = webapp2.WSGIApplication([
     ('/', MainPage),
     (r'/blog/?', BlogPageHandler),
@@ -401,5 +457,6 @@ app = webapp2.WSGIApplication([
     (r'/blog/(\d+)/edit', EditPageHandler),
     (r'/blog/(\d+)/delete', DeletePageHandler),
     (r'/blog/(\d+)/createComment', CreateCommentHandler),
+    (r'/blog/(\d+)/editComment', EditCommentHandler),
     (r'/blog/(\w+)/?', UserBlogPageHandler)  # check if a user page exists
 ], debug=True)

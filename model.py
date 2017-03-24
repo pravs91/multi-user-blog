@@ -16,6 +16,7 @@ class BlogPost(db.Model):
 
 
 class Like(db.Model):
+    # Not used for now, try to extend project to count Likes
     blog = db.ReferenceProperty(BlogPost)
     user = db.ReferenceProperty(User)
 
