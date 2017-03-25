@@ -83,7 +83,7 @@ input[type=password] {
 }
 
 textarea {
-  width: 500px;
+  width: 100%;
   height: 400px;
   font-size: 17px;
   font-family: monospace;
@@ -108,6 +108,10 @@ pre {
 
 img {
     max-width: 100%;
+}
+
+#post-subject{
+    width: 100%;
 }
 .main-title {
     display: block;

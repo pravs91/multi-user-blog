@@ -253,7 +253,7 @@ class PermalinkHandler(Handler):
             comments_dict = CommentsHelper.populate_comments(blog_entries)
             self.render("blog_entries.html",
                         blog_entries=blog_entries, user=user,
-                        comments_dict=comments_dict)
+                        comments_dict=comments_dict, permalink=True)
         # send 404 if not found
         else:
             self.error_404("The requested blog URL was not found.")
@@ -384,7 +384,7 @@ class CreateCommentHandler(Handler):
         if blog:
             blog_entries = [blog]
             comments_dict = CommentsHelper.populate_comments(blog_entries)
-            self.render("create_comment.html", user=user,
+            self.render("create_comment.html", user=user, permalink=True,
                         blog_entries=blog_entries, comments_dict=comments_dict)
         # send 404 error if post not found
         else:
@@ -422,7 +422,7 @@ class EditCommentHandler(Handler):
             blog_entries = [comment.blog]
             comments_dict = CommentsHelper.populate_comments(blog_entries)
             self.render("create_comment.html", user=user,
-                        content=comment.content,
+                        content=comment.content, permalink=True,
                         blog_entries=blog_entries,
                         comments_dict=comments_dict)
         else:
@@ -458,7 +458,8 @@ class DeleteCommentHandler(Handler):
             blog_entries = [comment.blog]
             comments_dict = CommentsHelper.populate_comments(blog_entries)
             self.render("delete_comment.html", comment=comment, user=user,
-                        blog_entries=blog_entries, comments_dict=comments_dict)
+                        blog_entries=blog_entries, comments_dict=comments_dict,
+                        permalink=True)
         else:
             self.error_404("The requested comment URL does not exist.")
 

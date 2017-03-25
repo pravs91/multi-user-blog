@@ -1,0 +1,24 @@
+<div class="post">
+    <div class="post-heading">
+        <div class="post-title">
+            <a class="permalink" href="/blog/{{entry.key().id()}}">{{entry.subject}}</a>
+            {% if user and user.username != entry.user.username %}
+                <button class="like-btn">
+                    <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
+                </button>
+            {% endif %}
+        </div>
+        <div class="post-date">{{entry.created.strftime("%b %d, %Y")}}</div>
+        <div class="post-user">
+            Created by <a class="user-link" href="/blog/{{entry.user.username}}">{{entry.user.username}}</a>
+        </div>
+    </div>
+    <pre width="30" class="post-content">{{entry.content | safe}}</pre>
+    {% if entry.user.username == user.username %}
+        <button class="edit-btn" onclick="edit({{entry.key().id()}})">Edit</button>
+        <button class="delete-btn" onclick="remove({{entry.key().id()}})">Delete</button>
+    {% endif %}
+    <button class="comment-btn" onclick="comment({{entry.key().id()}})">
+        <i class="fa fa-comment" aria-hidden="true"></i>
+    </button>
+</div>

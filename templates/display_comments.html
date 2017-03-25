@@ -1,0 +1,33 @@
+<div>
+    {% set curr_blog_comments = comments_dict[entry.key().id()] %}
+    {% if curr_blog_comments %}
+        {% if not permalink %}
+            <i class="fa fa-plus-square toggle-comments" aria-hidden="true"></i>
+        {% else %}    
+            <i class="fa fa-minus-square toggle-comments" aria-hidden="true"></i>
+        {% endif %}
+        Comments                
+    {% endif %}
+    <br>
+    {% if not permalink %}
+        <div class="comments" style="display: none;">
+    {% else %}    
+        <div class="comments" style="display: block;">
+    {% endif %}
+        {% for comment in curr_blog_comments %}
+            <div class="single-comment">
+                <div class="comment-heading">
+                    <a class="user-link" href="/blog/{{comment.user.username}}">{{comment.user.username}}</a>
+                    <span class="comment-time">Posted on {{comment.created.strftime("%d %B, %Y %I:%M%p")}}</span>
+                    {% if comment.user.username == user.username %}
+                        <span class="modify-comment">
+                            <a class="edit-comment" href="/blog/{{comment.key().id()}}/editComment">Edit </a>|
+                            <a class="edit-comment" href="/blog/{{comment.key().id()}}/deleteComment">Delete </a>
+                        </span>
+                    {% endif %}
+                </div>
+                <pre width="30" class="comment-content">{{comment.content | safe}}</pre>
+            </div>
+        {% endfor %}
+        </div>
+</div>

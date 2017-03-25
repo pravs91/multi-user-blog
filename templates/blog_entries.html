@@ -15,53 +15,9 @@
     {% block comment_header %}
     {% endblock %}
     {% for entry in blog_entries %}
-        <div class="post">
-            <div class="post-heading">
-                <div class="post-title">
-                    <a class="permalink" href="/blog/{{entry.key().id()}}">{{entry.subject}}</a>
-                    {% if user and user.username != entry.user.username %}
-                        <button class="like-btn">
-                            <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
-                        </button>
-                    {% endif %}
-                </div>
-                <div class="post-date">{{entry.created.strftime("%b %d, %Y")}}</div>
-                <div class="post-user">
-                    Created by <a class="user-link" href="/blog/{{entry.user.username}}">{{entry.user.username}}</a>
-                </div>
-            </div>
-            <pre width="30" class="post-content">{{entry.content | safe}}</pre>
-            {% if entry.user.username == user.username %}
-                <button class="edit-btn" onclick="edit({{entry.key().id()}})">Edit</button>
-                <button class="delete-btn" onclick="remove({{entry.key().id()}})">Delete</button>
-            {% endif %}
-            <button class="comment-btn" onclick="comment({{entry.key().id()}})">
-                <i class="fa fa-comment" aria-hidden="true"></i>
-            </button>
-            <br>
-            <div class="comments">
-                {% set curr_blog_comments = comments_dict[entry.key().id()] %}
-                {% if curr_blog_comments %}
-                    <h3>Comments</h3>
-                {% endif %}
-                {% for comment in curr_blog_comments %}
-                    <div class="single-comment">
-                        <div class="comment-heading">
-                            <a class="user-link" href="/blog/{{comment.user.username}}">{{comment.user.username}}</a>
-                            <span class="comment-time">Posted on {{comment.created.strftime("%d %B, %Y %I:%M%p")}}</span>
-                            {% if comment.user.username == user.username %}
-                                <span class="modify-comment">
-                                    <a class="edit-comment" href="/blog/{{comment.key().id()}}/editComment">Edit </a>|
-                                    <a class="edit-comment" href="/blog/{{comment.key().id()}}/deleteComment">Delete </a>
-                                </span>
-                            {% endif %}
-                        </div>
-                        <pre width="30" class="comment-content">{{comment.content | safe}}</pre>
-                    </div>
-                {% endfor %}
-            </div>
-        </div>
+        {% include "display_post.html" %}
         <br>
+        {% include "display_comments.html" %}
         <br>
     {% endfor %}
     <script type="text/javascript">
@@ -87,5 +43,22 @@
         function comment(id){
             window.location.href = '/blog/' + id + '/createComment';
         }
+
+        function toggleCommentsDiv(element){
+            element.addEventListener('click', function(){
+                if(element.classList.contains('fa-plus-square')){
+                    element.parentNode.getElementsByClassName('comments')[0].style.display = 'block';
+                } else {
+                    element.parentNode.getElementsByClassName('comments')[0].style.display = 'none';                    
+                }
+                element.classList.toggle('fa-plus-square');
+                element.classList.toggle('fa-minus-square');
+            })
+        }
+        var comment_icons = document.getElementsByClassName('toggle-comments');
+        for(var i=0; i<comment_icons.length; i++){
+            toggleCommentsDiv(comment_icons[i]);
+        }
+
     </script>
 {% endblock %}
