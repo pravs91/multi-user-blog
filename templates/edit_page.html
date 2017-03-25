@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{# template to edit a post, pre-populate contents #}
 {% block content %}
     <h2>Edit Post</h2>
 
@@ -19,6 +20,7 @@
       <input type="submit">
     </form>
     <script type="text/javascript">
+        // go back to previous page on cancel
         var button = document.getElementById('cancel-button');
         button.addEventListener('click',function(){
             window.location.href = window.history.back()

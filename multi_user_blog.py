@@ -16,6 +16,7 @@ jinja_env = jinja2.Environment(
 class Handler(webapp2.RequestHandler):
     "A class to handle common functionality of subclasses"
 
+    # write the response
     def write(self, *a, **kw):
         self.response.out.write(*a, **kw)
 
@@ -23,6 +24,7 @@ class Handler(webapp2.RequestHandler):
         t = jinja_env.get_template(template)
         return t.render(params)
 
+    # render a template
     def render(self, template, **kw):
         self.write(self.render_str(template, **kw))
 
@@ -41,6 +43,7 @@ class Handler(webapp2.RequestHandler):
                 self.response.headers.add_header('Set-Cookie', 'user=; Path=/')
             return None
 
+    # return 404 response with error msg
     def error_404(self, msg):
         self.response.status = '404 Not found'
         self.response.body = 'Error 404! ' + msg
@@ -49,6 +52,7 @@ class Handler(webapp2.RequestHandler):
 class SignUpHandler(Handler):
     """A class to handle signup page."""
 
+    # regex to validate user inputs
     USER_RE = re.compile(r"^[a-zA-Z0-9_-]{3,20}$")
     PASSWORD_RE = re.compile(r"^.{3,20}$")
     EMAIL_RE = re.compile(r"[\S]+@[\S]+.[\S]+$")
@@ -72,6 +76,7 @@ class SignUpHandler(Handler):
         if not valid_username:
             invalid_username = "That's not a valid username."
 
+        # check if username already exists in db
         all_users = db.Query(User).filter('username =', username)
         user = all_users.get()
         if user:
@@ -92,6 +97,7 @@ class SignUpHandler(Handler):
 
         if invalid_username or username_exists or invalid_password or\
                 invalid_email or passwords_dont_match:
+            # populate all error msgs in dict
             kwargs = {'invalid_username': invalid_username,
                       'username_exists': username_exists,
                       'invalid_password': invalid_password,
@@ -102,10 +108,12 @@ class SignUpHandler(Handler):
                       }
             self.render("user_signup.html", **kwargs)
         else:
+            # create User instance and put into db
             pw_hash = make_pw_hash(username, password)
             newuser = User(username=username, pw_hash=pw_hash, email=email)
             newuser.put()  # put into User db
             key = newuser.key().id()
+            # set cookie
             cookie = make_cookie(str(key))
             self.response.headers.add_header(
                 'Set-Cookie', 'user=%s; Path=/' % cookie)
@@ -128,6 +136,7 @@ class LoginHandler(Handler):
         # render login page otherwise
         self.render("login.html")
 
+    # function to redner template with errors
     def invalid_login(self, error, username):
         self.render("login.html", error=error, username=username)
 
@@ -174,6 +183,7 @@ class LogoutHandler(Handler):
 
 
 class NewPostHandler(Handler):
+    """A class to handle /newpost request"""
 
     def get(self):
         # if user is not logged in, redirect to login
@@ -187,6 +197,8 @@ class NewPostHandler(Handler):
     def post(self):
         subject = self.request.get("subject")
         content = self.request.get("content")
+
+        # check if both subject and content exist
         if not (subject and content):
             error = "Please enter both subject and content."
             self.render("newpost.html", error=error,
@@ -196,10 +208,11 @@ class NewPostHandler(Handler):
             # redirect to login if cookie wrong
             if not user:
                 return self.redirect("/blog/login")
+            # create BlogPost instance for current user
             blog = BlogPost(subject=subject, content=content, user=user)
             blog.put()  # insert into db
             id = blog.key().id()
-            self.redirect("/blog/" + str(id))
+            self.redirect("/blog/" + str(id))  # redirect to permalink
 
 
 class MainPage(Handler):
@@ -210,6 +223,7 @@ class MainPage(Handler):
 
 class CommentsHelper(object):
 
+    # helper method to populate comments of each blog in a dict
     @staticmethod
     def populate_comments(blog_entries):
         comments_dict = {}
@@ -218,6 +232,7 @@ class CommentsHelper(object):
             comments = db.Query(Comment).filter(
                 'blog =', blog).order('created')
             # populate dict with id as unique key
+            # if comments exist for this blog
             if comments.count(limit=2) > 0:
                 comments_dict[blog.key().id()] = comments
         return comments_dict
@@ -233,6 +248,7 @@ class WelcomeHandler(Handler):
             # get blog entries of this particular user from db
             blog_entries = db.Query(BlogPost).filter(
                 'user =', user).order('-created')
+            # populate comments for the blogs
             comments_dict = CommentsHelper.populate_comments(blog_entries)
             self.render("welcome_page.html", user=user,
                         blog_entries=blog_entries,
@@ -242,11 +258,14 @@ class WelcomeHandler(Handler):
 
 
 class PermalinkHandler(Handler):
+    """A class to show a permalink for a blog."""
 
     def get(self, blog_id):
+        # retrieve blog from db
         blog = BlogPost.get_by_id(int(blog_id))
         if blog:
             user = self.validate_user()
+            # populate comments for blog
             comments = db.Query(Comment).filter(
                 'blog =', blog).order('created')
             blog_entries = [blog]  # user array to use same template
@@ -263,9 +282,11 @@ class BlogPageHandler(Handler):
     """A class to retrieve all blog posts."""
 
     def get(self):
-        # get all blog entries from db
         user = self.validate_user()
+        # get all blog entries from db
         blog_entries = db.Query(BlogPost).order('-created')
+
+        # populate comments for all blogs
         comments_dict = CommentsHelper.populate_comments(blog_entries)
         self.render("blog_page.html", blog_entries=blog_entries,
                     user=user, comments_dict=comments_dict)
@@ -286,6 +307,7 @@ class UserBlogPageHandler(Handler):
         # get blog entries of this particular user from db
         blog_entries = db.Query(BlogPost).filter(
             'user =', given_user).order('-created')
+        # populate comments for blogs
         comments_dict = CommentsHelper.populate_comments(blog_entries)
         logged_in_user = self.validate_user()
         self.render("user_blog_page.html",
@@ -301,6 +323,8 @@ class EditPageHandler(Handler):
         user = self.validate_user()
         if not user:
             return self.redirect("/blog/login")
+
+        # retrieve blog and show edit page by pre-populating fields
         blog = BlogPost.get_by_id(int(blog_id))
         if blog:
             self.render("edit_page.html", user=user,
@@ -324,7 +348,7 @@ class EditPageHandler(Handler):
             if not user:
                 return self.redirect("/blog/login")
 
-            # retrieve blog post from db
+            # retrieve blog post from db and edit fields
             blog = BlogPost.get_by_id(int(blog_id))
             if blog:
                 blog.subject = subject
@@ -337,12 +361,15 @@ class EditPageHandler(Handler):
 
 
 class DeletePageHandler(Handler):
+    """A class to delete a blog post"""
 
     def get(self, blog_id):
         # check if user is logged in
         user = self.validate_user()
         if not user:
             return self.redirect("/blog/login")
+
+        # retrieve blog and show delete page
         blog = BlogPost.get_by_id(int(blog_id))
         if blog:
             self.render("delete_page.html", user=user,
@@ -368,18 +395,22 @@ class DeletePageHandler(Handler):
             db.delete(comments)
             # delete blog itself
             blog.delete()
+            # render delete_success page
             self.render("delete_success.html", subject=subject, user=user)
         else:
             self.error_404("The requested blog URL was not found.")
 
 
 class CreateCommentHandler(Handler):
+    """A class to create comments for a blog post"""
 
     def get(self, blog_id):
         # check if user is logged in
         user = self.validate_user()
         if not user:
             return self.redirect("/blog/login")
+
+        # retrieve blog and comments
         blog = BlogPost.get_by_id(int(blog_id))
         if blog:
             blog_entries = [blog]
@@ -401,15 +432,17 @@ class CreateCommentHandler(Handler):
 
         if blog:
             content = self.request.get("comment")
+            # create comment and insert into db
             comment = Comment(user=user, blog=blog, content=content)
             comment.put()
-            time.sleep(0.2)  # FIXME comment while deploying
+            # time.sleep(0.2)  # hack for localhost consistency
             self.redirect('/blog/' + blog_id)
         else:
             self.error_404("The requested blog URL was not found.")
 
 
 class EditCommentHandler(Handler):
+    """A class to edit a comment."""
 
     def get(self, comment_id):
         # check if user is logged in
@@ -417,6 +450,7 @@ class EditCommentHandler(Handler):
         if not user:
             return self.redirect("/blog/login")
 
+        # retrieve comment and pre-populate fields
         comment = Comment.get_by_id(int(comment_id))
         if comment:
             blog_entries = [comment.blog]
@@ -434,11 +468,12 @@ class EditCommentHandler(Handler):
         if not user:
             return self.redirect("/blog/login")
 
+        # retrieve comment and edit
         comment = Comment.get_by_id(int(comment_id))
         if comment:
             comment.content = self.request.get("comment")
             comment.put()
-            time.sleep(0.2)  # FIXME
+            # time.sleep(0.2)
             blog_id = comment.blog.key().id()
             self.redirect('/blog/' + str(blog_id))
         else:
@@ -446,6 +481,7 @@ class EditCommentHandler(Handler):
 
 
 class DeleteCommentHandler(Handler):
+    """A class to delete a comment."""
 
     def get(self, comment_id):
         # check if user is logged in
@@ -453,6 +489,7 @@ class DeleteCommentHandler(Handler):
         if not user:
             return self.redirect("/blog/login")
 
+        # retrieve comment to display on top
         comment = Comment.get_by_id(int(comment_id))
         if comment:
             blog_entries = [comment.blog]
@@ -469,11 +506,12 @@ class DeleteCommentHandler(Handler):
         if not user:
             return self.redirect("/blog/login")
 
+        # retrieve comment and delete if exists
         comment = Comment.get_by_id(int(comment_id))
         if comment:
             blog_id = comment.blog.key().id()
             comment.delete()
-            time.sleep(0.2)  # FIXME
+            # time.sleep(0.2)
             self.redirect('/blog/' + str(blog_id))
         else:
             self.error_404("The requested comment URL does not exist.")

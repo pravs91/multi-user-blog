@@ -1,5 +1,6 @@
 {% extends "blog_entries.html" %}
 
+{# form to delete a comment #}
 {% block comment_header %}
     <form class="comment-header" method="post">
         <h3>Are you sure you want to delete this comment for this post?</h3>
@@ -16,6 +17,7 @@
         <br>       
     </form>
     <script type="text/javascript">
+        // go back to previous page on clicking cancel
         var button = document.getElementById('cancel-button');
         button.addEventListener('click',function(){
             window.location.href = window.history.back()

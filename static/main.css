@@ -213,9 +213,11 @@ img {
 .edit-comment {
     text-decoration: none;
 }
+
 .edit-comment:hover {
     text-decoration: underline;
 }
+
 .edit-comment:visited {
     color: blue;
 }

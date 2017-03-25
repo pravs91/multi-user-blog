@@ -1,7 +1,9 @@
+{# template to display a single blog post #}
 <div class="post">
     <div class="post-heading">
         <div class="post-title">
             <a class="permalink" href="/blog/{{entry.key().id()}}">{{entry.subject}}</a>
+            {# show like button only if this post doesn't belong to current user #}
             {% if user and user.username != entry.user.username %}
                 <button class="like-btn">
                     <i class="fa fa-thumbs-o-up" aria-hidden="true"></i>
@@ -14,6 +16,7 @@
         </div>
     </div>
     <pre width="30" class="post-content">{{entry.content | safe}}</pre>
+    {# show edit/delete button only if this post belongs to current user #}
     {% if entry.user.username == user.username %}
         <button class="edit-btn" onclick="edit({{entry.key().id()}})">Edit</button>
         <button class="delete-btn" onclick="remove({{entry.key().id()}})">Delete</button>

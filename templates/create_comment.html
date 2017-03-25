@@ -1,5 +1,6 @@
 {% extends "blog_entries.html" %}
 
+{# form to create a comment #}
 {% block comment_header %}
     <form class="comment-header" method="post">
         <h3>Enter your comment</h3>
@@ -16,6 +17,7 @@
       crossorigin="anonymous"></script>
     <script>
         // disable submit button if input is empty using jquery
+        // go to prev page on clicking cancel
         $(function(){
             if ($('.comment-input').value == "") {
                 $('#submit-button').prop('disabled',true);

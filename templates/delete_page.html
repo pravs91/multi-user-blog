@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 
+{# form to delete a blog post #}
 {% block content %}
     <form class="post" method="post">
         <h3>Are you sure you want to delete this post?</h3>
@@ -15,6 +16,7 @@
         <pre width="30" class="post-content">{{blog.content | safe}}</pre>
     </form>
     <script type="text/javascript">
+        // go back to previous page on clicking cancel
         var button = document.getElementById('cancel-button');
         button.addEventListener('click',function(){
             window.location.href = window.history.back()

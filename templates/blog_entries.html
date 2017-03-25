@@ -21,13 +21,16 @@
         <br>
     {% endfor %}
     <script type="text/javascript">
+        // function to redirect to edit blog link
         function edit(id){
             window.location.href = '/blog/' + id + '/edit';
         }
+        // function to redirect to delete blog link
         function remove(id){
             window.location.href = "/blog/" + id + '/delete';
         }
 
+        // event listener for like-btn, toggles between like and unlike icons
         function addEventForLike(element){
             element.addEventListener('click',function(){
                 element.children[0].classList.toggle('fa-thumbs-o-up');
@@ -35,15 +38,18 @@
             })
         }
 
+        // get all like_buttons and add event listener for 'click'
         var like_buttons = document.getElementsByClassName('like-btn');
         for(var i=0; i<like_buttons.length; i++){
             addEventForLike(like_buttons[i]);
         }
 
+        // function to redirect to createComment link on clicking comment-btn
         function comment(id){
             window.location.href = '/blog/' + id + '/createComment';
         }
 
+        // toggle the "comments" div when clicking the +/- button
         function toggleCommentsDiv(element){
             element.addEventListener('click', function(){
                 if(element.classList.contains('fa-plus-square')){
@@ -55,10 +61,11 @@
                 element.classList.toggle('fa-minus-square');
             })
         }
+
+        // get all comment_icons and add event listener for each
         var comment_icons = document.getElementsByClassName('toggle-comments');
         for(var i=0; i<comment_icons.length; i++){
             toggleCommentsDiv(comment_icons[i]);
         }
-
     </script>
 {% endblock %}
