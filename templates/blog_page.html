@@ -2,5 +2,9 @@
 
 {# template for blog main page #}
 {% block title %}
-    <h2>Latest blog entries</h2>
+    {% if blog_entries.count(limit=2) > 0 %}
+        <h2>Latest blog entries</h2>
+    {% else %}
+        <h2>Login/ Signup to create new posts!</h2>
+    {% endif %}
 {% endblock %}

@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
 {% block content %}
-    <div class="new-post-link">
-        <a href="/blog/newpost">New Post</a>
+    <div class="new-post">
+        <a class="new-post-link" href="/blog/newpost">New Post</a>
     </div>
     {% if user %}
         <div class="my-posts">
-            <a href="/blog/welcome">My Posts</a>
+            <a class="my-post-link" href="/blog/welcome">My Posts</a>
         </div>
     {% endif %}
 

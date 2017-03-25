@@ -30,12 +30,16 @@ body {
     text-decoration: underline;
 }
 
-.new-post-link {
+.new-post {
     font-size: 13px;
     color: gray;
     position: absolute;
     top: 10px;
     left: 10px;
+}
+
+.new-post-link:visited {
+    color: blue;
 }
 
 .my-posts {
@@ -44,6 +48,10 @@ body {
     position: absolute;
     top: 10px;
     left: 90px;
+}
+
+.my-post-link:visited {
+    color: blue;
 }
 
 h2 {
