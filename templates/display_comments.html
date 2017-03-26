@@ -2,8 +2,8 @@
 
 <div>
     {# show +/- Comments icon if comments exists for this post #}
-    {% set curr_blog_comments = comments_dict[entry.key().id()] %}
-    {% if curr_blog_comments %}
+    {% set curr_blog_comments = entry.blog_comments.order('created') %}
+    {% if curr_blog_comments.count(limit=2) > 0 %}
         {% if not permalink %} {# show plus icon for multiple blogs #}
             <i class="fa fa-plus-square toggle-comments" aria-hidden="true"></i>
         {% else %} {# show minus icon for permalink #}

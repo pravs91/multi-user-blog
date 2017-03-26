@@ -15,6 +15,10 @@ class DeletePageHandler(Handler):
         # retrieve blog and show delete page
         blog = BlogPost.get_by_id(int(blog_id))
         if blog:
+            # check if blog belongs to user
+            if blog.user.username != user.username:
+                return self.redirect("/blog/login")
+
             self.render("delete_page.html", user=user,
                         blog=blog)
         # send 404 error if post not found
@@ -32,6 +36,10 @@ class DeletePageHandler(Handler):
 
         # delete and redirect to /blog
         if blog:
+            # check if blog belongs to user
+            if blog.user.username != user.username:
+                return self.redirect("/blog/login")
+
             subject = blog.subject
             # delete associated comments
             comments = db.Query(Comment).filter('blog =', blog)

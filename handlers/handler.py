@@ -48,18 +48,19 @@ class Handler(webapp2.RequestHandler):
         self.response.body = 'Error 404! ' + msg
 
 
-class CommentsHelper(object):
+# no longer user because model itself has ReferenceProperty collection
+# class CommentsHelper(object):
 
-    # helper method to populate comments of each blog in a dict
-    @staticmethod
-    def populate_comments(blog_entries):
-        comments_dict = {}
-        for blog in blog_entries:
-            # retrieve comments for this blog
-            comments = db.Query(Comment).filter(
-                'blog =', blog).order('created')
-            # populate dict with id as unique key
-            # if comments exist for this blog
-            if comments.count(limit=2) > 0:
-                comments_dict[blog.key().id()] = comments
-        return comments_dict
+#     # helper method to populate comments of each blog in a dict
+#     @staticmethod
+#     def populate_comments(blog_entries):
+#         comments_dict = {}
+#         for blog in blog_entries:
+#             # retrieve comments for this blog
+#             comments = db.Query(Comment).filter(
+#                 'blog =', blog).order('created')
+#             # populate dict with id as unique key
+#             # if comments exist for this blog
+#             if comments.count(limit=2) > 0:
+#                 comments_dict[blog.key().id()] = comments
+#         return comments_dict

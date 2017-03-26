@@ -15,6 +15,10 @@ class EditPageHandler(Handler):
         # retrieve blog and show edit page by pre-populating fields
         blog = BlogPost.get_by_id(int(blog_id))
         if blog:
+            # check if blog belongs to user
+            if blog.user.username != user.username:
+                return self.redirect("/blog/login")
+
             self.render("edit_page.html", user=user,
                         subject=blog.subject, content=blog.content)
         # redirect to /blog if post not found
@@ -39,6 +43,10 @@ class EditPageHandler(Handler):
             # retrieve blog post from db and edit fields
             blog = BlogPost.get_by_id(int(blog_id))
             if blog:
+                # check if blog belongs to user
+                if blog.user.username != user.username:
+                    return self.redirect("/blog/login")
+
                 blog.subject = subject
                 blog.content = content
                 blog.put()

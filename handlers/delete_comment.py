@@ -1,5 +1,5 @@
 from models import BlogPost, User, Comment
-from handler import Handler, CommentsHelper
+from handler import Handler
 from google.appengine.ext import db
 
 
@@ -15,11 +15,13 @@ class DeleteCommentHandler(Handler):
         # retrieve comment to display on top
         comment = Comment.get_by_id(int(comment_id))
         if comment:
+            # check if comment belongs to user
+            if comment.user.username != user.username:
+                return self.redirect('/blog/login')
+
             blog_entries = [comment.blog]
-            comments_dict = CommentsHelper.populate_comments(blog_entries)
             self.render("delete_comment.html", comment=comment, user=user,
-                        blog_entries=blog_entries, comments_dict=comments_dict,
-                        permalink=True)
+                        blog_entries=blog_entries, permalink=True)
         else:
             self.error_404("The requested comment URL does not exist.")
 
@@ -32,6 +34,10 @@ class DeleteCommentHandler(Handler):
         # retrieve comment and delete if exists
         comment = Comment.get_by_id(int(comment_id))
         if comment:
+            # check if comment belongs to user
+            if comment.user.username != user.username:
+                return self.redirect('/blog/login')
+
             blog_id = comment.blog.key().id()
             comment.delete()
             # time.sleep(0.2)

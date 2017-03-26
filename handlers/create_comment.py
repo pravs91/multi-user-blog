@@ -1,5 +1,5 @@
 from models import BlogPost, User, Comment
-from handler import Handler, CommentsHelper
+from handler import Handler
 from google.appengine.ext import db
 
 
@@ -12,13 +12,12 @@ class CreateCommentHandler(Handler):
         if not user:
             return self.redirect("/blog/login")
 
-        # retrieve blog and comments
+        # retrieve blog
         blog = BlogPost.get_by_id(int(blog_id))
         if blog:
             blog_entries = [blog]
-            comments_dict = CommentsHelper.populate_comments(blog_entries)
             self.render("create_comment.html", user=user, permalink=True,
-                        blog_entries=blog_entries, comments_dict=comments_dict)
+                        blog_entries=blog_entries)
         # send 404 error if post not found
         else:
             self.error_404("The requested blog URL was not found.")

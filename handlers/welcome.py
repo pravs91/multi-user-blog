@@ -1,5 +1,5 @@
 from models import BlogPost
-from handler import Handler, CommentsHelper
+from handler import Handler
 from google.appengine.ext import db
 
 
@@ -11,12 +11,8 @@ class WelcomeHandler(Handler):
         user = self.validate_user()
         if user:
             # get blog entries of this particular user from db
-            blog_entries = db.Query(BlogPost).filter(
-                'user =', user).order('-created')
-            # populate comments for the blogs
-            comments_dict = CommentsHelper.populate_comments(blog_entries)
+            blog_entries = user.blog_entries.order('-created')
             self.render("welcome_page.html", user=user,
-                        blog_entries=blog_entries,
-                        comments_dict=comments_dict)
+                        blog_entries=blog_entries)
         else:
             self.redirect("/blog/login")

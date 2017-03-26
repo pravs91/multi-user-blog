@@ -1,4 +1,4 @@
-from handler import Handler, CommentsHelper
+from handler import Handler
 from login import LoginHandler
 from logout import LogoutHandler
 from signup import SignUpHandler
